@@ -4,13 +4,15 @@ version = "0.1.0"
 description = "An agentic system using Kizaru songs"
 requires-python = ">=3.13"
 dependencies = [
-    "datasets>=2.15.0",
-    "transformers>=4.36.0",
-    "torch>=2.1.0",
-    "numpy>=1.24.0",
-    "pandas>=2.1.0",
-    "ipykernel>=6.29.5",
-    "wordcloud>=1.9.4",
-    "nltk>=3.9.1",
 ]
 
+[dependency-groups]
+parser = [
+    "rauth>=0.7.3",
+]
+notebooks = [
+    "matplotlib>=3.10.3",
+    "nltk>=3.9.1",
+    "pandas>=2.3.0",
+    "wordcloud>=1.9.4",
+]
