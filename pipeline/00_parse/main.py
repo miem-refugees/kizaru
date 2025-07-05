@@ -5,7 +5,7 @@ import dotenv
 from lyricsgenius import Genius
 
 
-def fetch_artist_songs(artist_name: str, max_songs: int = 200) -> pd.DataFrame:
+def fetch_artist_songs(artist_name: str, max_songs: int) -> pd.DataFrame:
     genius = Genius(os.getenv("GENIUS_ACCESS_TOKEN"))
     artist = genius.search_artist(artist_name, max_songs=1)
     if not artist:
@@ -56,13 +56,15 @@ def fetch_artist_songs(artist_name: str, max_songs: int = 200) -> pd.DataFrame:
     return pd.DataFrame(songs)
 
 
-def main() -> None:
+def main():
+    dotenv.load_dotenv()
+
     parser = argparse.ArgumentParser(description="Create a dataset from Genius lyrics.")
     parser.add_argument(
         "--artist", type=str, default="kizaru", help="Artist name to fetch"
     )
     parser.add_argument(
-        "--max-songs", type=int, default=1000, help="Max number of songs to fetch"
+        "--max-songs", type=int, default=200, help="Max number of songs to fetch"
     )
     args = parser.parse_args()
 
@@ -70,7 +72,7 @@ def main() -> None:
     print("sample:\n", df.head())
 
     out_parquet = os.path.join(
-        os.path.dirname(__file__), "..", "data", f"{args.artist}_lyrics.parquet"
+        os.path.dirname(__file__), "..", "data", f"00_{args.artist}_lyrics.parquet"
     )
     df.to_parquet(out_parquet, index=False)
 
@@ -78,6 +80,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    dotenv.load_dotenv()
-
     main()
