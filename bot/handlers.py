@@ -159,8 +159,6 @@ class Handlers:
         self.random_threshold += 1
         if self.random_threshold > 10:
             self.random_threshold = 0
-            await query.answer()
-            return
 
         await query.answer()
         await query.edit_message_reply_markup(self.settings_keyboard())
@@ -224,6 +222,13 @@ class Handlers:
 
         await update.message.reply_text(result)
 
+    @admin_only
+    async def restart_handler(
+        self, update: Update, _: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await update.message.reply_text("Рестартую, братья. Всем до связи 📞")
+        exit(0)
+
     def collect_handlers(self) -> list[BaseHandler]:
         return [
             CommandHandler("start", self.start_command),
@@ -231,6 +236,7 @@ class Handlers:
             CommandHandler("setrandom", self.set_random_command),
             CommandHandler("setratelimit", self.set_ratelimit),
             CommandHandler("settings", self.settings),
+            CommandHandler("restart", self.restart_handler),
             MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handler),
             CallbackQueryHandler(self.toggle_on_callback, "^settings_bot_(on|off)$"),
             CallbackQueryHandler(
@@ -247,6 +253,7 @@ class Handlers:
             ("start", "start"),
             ("id", "get my id"),
             ("settings", "settings menu"),
-            ("setrandom", "/setrandom 5 (from 1 to 10)"),
-            ("setratelimit", "/setratelimit 5 (sec timeout)"),
+            ("setrandom", "set random seed 5 (from 1 to 10)"),
+            ("setratelimit", "set ratelimit 5 (sec timeout)"),
+            ("restart", "restart bot"),
         ]
