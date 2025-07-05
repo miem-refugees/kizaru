@@ -219,8 +219,8 @@ class Handlers:
         except Exception as e:
             await update.message.reply_text(f"Упс, белый: {e}")
             return
-
-        await update.message.reply_text(result)
+        if result:
+            await update.message.reply_text(result)
 
     @admin_only
     async def restart_handler(

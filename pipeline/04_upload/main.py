@@ -1,5 +1,6 @@
 import dotenv
 import os
+from fastembed import SparseTextEmbedding
 import pandas as pd
 
 from qdrant_client import QdrantClient, models
@@ -14,7 +15,9 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
         client.get_collection(collection_name)
 
         collection_info = client.get_collection(collection_name)
-        existing_size = collection_info.config.params.vectors.size
+        existing_size = collection_info.config.params.vectors[
+            "intfloat/multilingual-e5-small"
+        ].size
         if existing_size != vector_size:
             raise RuntimeError(
                 f"Mismatch collection vector size: existing: {existing_size}, input: {vector_size}"
@@ -23,10 +26,12 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
     except UnexpectedResponse:
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=models.VectorParams(
-                size=vector_size,
-                distance=models.Distance.COSINE,
-            ),
+            vectors_config={
+                "intfloat/multilingual-e5-small": models.VectorParams(
+                    size=vector_size,
+                    distance=models.Distance.COSINE,
+                )
+            },
             # setting the HNSW m parameter to 0 disable index building entirely until enable it later
             hnsw_config=models.HnswConfigDiff(
                 m=0,
@@ -34,21 +39,48 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
             optimizers_config=models.OptimizersConfigDiff(
                 indexing_threshold=0,
             ),
+            sparse_vectors_config={
+                "bm42": models.SparseVectorParams(modifier=models.Modifier.IDF)
+            },
         )
 
 
 def upload_vectors(client: QdrantClient, df: pd.DataFrame, batch_size: int = 512):
     payload_columns = [col for col in df.columns if col != "embedding"]
 
+    sparse_bm42_model = SparseTextEmbedding(
+        model_name="Qdrant/bm42-all-minilm-l6-v2-attentions"
+    )
+
     num_rows = df.shape[0]
     for start in range(0, num_rows, batch_size):
         end = min(start + batch_size, num_rows)
         batch = df.iloc[start:end]
+        bm42_embeds = list(sparse_bm42_model.embed([text for text in batch["text"]]))
+
         points = []
-        for idx, row in batch.iterrows():
+        for zipped, sparse_vector_fe in zip(batch.iterrows(), bm42_embeds):
+            idx, row = zipped
+
             payload = {col: row[col] for col in payload_columns if pd.notna(row[col])}
+
+            sparse_vector = models.SparseVector(
+                values=sparse_vector_fe.values.tolist(),
+                indices=sparse_vector_fe.indices.tolist(),
+            )
+
             points.append(
-                PointStruct(id=int(idx), vector=row["embedding"], payload=payload)
+                PointStruct(
+                    id=int(idx),
+                    vector={
+                        "bm42": models.SparseVector(
+                            values=sparse_vector.values,
+                            indices=sparse_vector.indices,
+                        ),
+                        "intfloat/multilingual-e5-small": row["embedding"],
+                    },
+                    payload=payload,
+                )
             )
 
         client.upsert(collection_name=collection_name, points=points, wait=True)
@@ -63,6 +95,11 @@ def setup_indices(client: QdrantClient):
             m=16,
         ),
         optimizer_config=models.OptimizersConfigDiff(indexing_threshold=20000),
+        sparse_vectors_config={
+            "bm42": models.SparseVectorParams(
+                modifier=models.Modifier.IDF,
+            )
+        },
     )
 
     print("creating indices")

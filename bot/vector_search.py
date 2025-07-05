@@ -1,9 +1,9 @@
 import os
-import logging
 from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
-import torch
+from fastembed import SparseTextEmbedding
 import time
+
+from qdrant_client.http.models import models
 
 
 COLLECTION_NAME = "kizaru_lyrics"
@@ -18,30 +18,31 @@ class VectorSearch:
         # sanity check
         self.client.info()
 
-        if torch.cuda.is_available():
-            device = "cuda"
-        elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
-            device = "mps"
-        else:
-            device = "cpu"
-
-        logging.debug("using device: %s and model %s", device, MODEL)
-        self.embed_model = SentenceTransformer(MODEL, device=device)
+        self.embed_model = SparseTextEmbedding(
+            model_name="Qdrant/bm42-all-minilm-l6-v2-attentions"
+        )
 
     def search(self, text: str):
         start_time = time.time()
 
-        embedding = self.embed_model.encode(
-            text,
-            prompt="query: ",
-            show_progress_bar=False,
+        sparse_vector_fe = list(self.embed_model.query_embed(text))[0]
+        sparse_vector = models.SparseVector(
+            values=sparse_vector_fe.values.tolist(),
+            indices=sparse_vector_fe.indices.tolist(),
         )
 
-        hit = self.client.query_points(
+        hits = self.client.query_points(
             collection_name=COLLECTION_NAME,
-            query=embedding,
+            query=sparse_vector,
+            using="bm42",
+            with_payload=True,
             limit=1,
-        ).points[0]
+        ).points
+
+        if len(hits) == 0:
+            return None
+
+        hit = hits[0]
 
         result = f"{hit.payload['text']}\n\nⒸ {hit.payload['title']}"
 
