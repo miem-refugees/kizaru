@@ -5,7 +5,10 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 on:
-  workflow_dispatch
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -44,7 +47,7 @@ jobs:
         env:
           IMAGE_REF: ${{ steps.meta.outputs.tags }}
         run: |
-          docker-compose --context remote -f docker-compose.yml up -d
+          docker compose --context remote -f docker-compose.yml up -d
 
       - name: cleanup
         run: rm -rf ~/.ssh
