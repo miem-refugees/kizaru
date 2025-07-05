@@ -59,10 +59,9 @@ class Handlers:
             )
             return
 
-        global random_tsh
-        random_tsh = num
+        self.random_treshold = num
 
-        await update.message.reply_text(f"Рандом теперь {random_tsh} в пределах 1-10")
+        await update.message.reply_text(f"Рандом теперь {self.random_treshold} в пределах 1-10")
 
     @admin_only
     async def toggle_ratelimit_callback(
