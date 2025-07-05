@@ -25,7 +25,7 @@ class VectorSearch:
         else:
             device = "cpu"
 
-        logging.debug("using device: {} and model", device, MODEL)
+        logging.debug("using device: %s and model %s", device, MODEL)
         self.embed_model = SentenceTransformer(MODEL, device=device)
 
     def search(self, text: str):
