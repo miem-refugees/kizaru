@@ -40,7 +40,7 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
                 indexing_threshold=0,
             ),
             sparse_vectors_config={
-                "bm42": models.SparseVectorParams(modifier=models.Modifier.IDF)
+                "bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)
             },
         )
 
@@ -48,18 +48,16 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
 def upload_vectors(client: QdrantClient, df: pd.DataFrame, batch_size: int = 512):
     payload_columns = [col for col in df.columns if col != "embedding"]
 
-    sparse_bm42_model = SparseTextEmbedding(
-        model_name="Qdrant/bm42-all-minilm-l6-v2-attentions"
-    )
+    sparse_bm25_model = SparseTextEmbedding(model_name="Qdrant/bm25")
 
     num_rows = df.shape[0]
     for start in range(0, num_rows, batch_size):
         end = min(start + batch_size, num_rows)
         batch = df.iloc[start:end]
-        bm42_embeds = list(sparse_bm42_model.embed([text for text in batch["text"]]))
+        bm25_embeds = list(sparse_bm25_model.embed([text for text in batch["text"]]))
 
         points = []
-        for zipped, sparse_vector_fe in zip(batch.iterrows(), bm42_embeds):
+        for zipped, sparse_vector_fe in zip(batch.iterrows(), bm25_embeds):
             idx, row = zipped
 
             payload = {col: row[col] for col in payload_columns if pd.notna(row[col])}
@@ -73,7 +71,7 @@ def upload_vectors(client: QdrantClient, df: pd.DataFrame, batch_size: int = 512
                 PointStruct(
                     id=int(idx),
                     vector={
-                        "bm42": models.SparseVector(
+                        "bm25": models.SparseVector(
                             values=sparse_vector.values,
                             indices=sparse_vector.indices,
                         ),
@@ -95,11 +93,6 @@ def setup_indices(client: QdrantClient):
             m=16,
         ),
         optimizer_config=models.OptimizersConfigDiff(indexing_threshold=20000),
-        sparse_vectors_config={
-            "bm42": models.SparseVectorParams(
-                modifier=models.Modifier.IDF,
-            )
-        },
     )
 
     print("creating indices")
