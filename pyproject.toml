@@ -4,10 +4,13 @@ version = "0.1.0"
 description = "An agentic system using Kizaru songs"
 requires-python = ">=3.13"
 dependencies = [
+    "dotenv>=0.9.9",
 ]
 
 [dependency-groups]
 parser = [
+    "lyricsgenius>=3.6.4",
+    "pyarrow>=20.0.0",
     "rauth>=0.7.3",
 ]
 notebooks = [
