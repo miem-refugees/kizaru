@@ -19,7 +19,7 @@ class VectorSearch:
         self.client.info()
 
         self.embed_model = SparseTextEmbedding(
-            model_name="Qdrant/bm25",
+            model_name="Qdrant/bm25", language="russian"
         )
 
     def search(self, text: str):

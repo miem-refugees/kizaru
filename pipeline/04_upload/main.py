@@ -48,7 +48,9 @@ def ensure_collection_created(client: QdrantClient, vector_size: int):
 def upload_vectors(client: QdrantClient, df: pd.DataFrame, batch_size: int = 512):
     payload_columns = [col for col in df.columns if col != "embedding"]
 
-    sparse_bm25_model = SparseTextEmbedding(model_name="Qdrant/bm25")
+    sparse_bm25_model = SparseTextEmbedding(
+        model_name="Qdrant/bm25", language="russian"
+    )
 
     num_rows = df.shape[0]
     for start in range(0, num_rows, batch_size):
