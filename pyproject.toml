@@ -5,6 +5,9 @@ description = "An agentic system using Kizaru songs"
 requires-python = ">=3.13"
 dependencies = [
     "dotenv>=0.9.9",
+    "qdrant-client>=1.14.3",
+    "sentence-transformers>=5.0.0",
+    "torch>=2.7.1",
 ]
 
 [dependency-groups]
@@ -14,8 +17,10 @@ parser = [
     "rauth>=0.7.3",
     "pytest>=8.4.1",
     "pandas>=2.3.0",
+    "tqdm>=4.67.1",
 ]
 notebooks = [
+    "ipykernel>=6.29.5",
     "matplotlib>=3.10.3",
     "nltk>=3.9.1",
     "pandas>=2.3.0",

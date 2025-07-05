@@ -1,11 +1,14 @@
 import os
 import pandas as pd
 import argparse
+from datetime import datetime
 import dotenv
 from lyricsgenius import Genius
 
+artist_name = "kizaru"
 
-def fetch_artist_songs(artist_name: str, max_songs: int) -> pd.DataFrame:
+
+def fetch_artist_songs(max_songs: int) -> pd.DataFrame:
     genius = Genius(os.getenv("GENIUS_ACCESS_TOKEN"))
     artist = genius.search_artist(artist_name, max_songs=1)
     if not artist:
@@ -32,6 +35,14 @@ def fetch_artist_songs(artist_name: str, max_songs: int) -> pd.DataFrame:
                     print(f"Skipping song {meta['title']}")
                     continue
 
+                release_date = None
+                if meta.get("release_date_components"):
+                    release_date = datetime(
+                        meta["release_date_components"].get("year", 0),
+                        meta["release_date_components"].get("month", 0),
+                        meta["release_date_components"].get("day", 0),
+                    )
+
                 songs.append(
                     {
                         "id": song.id,
@@ -41,12 +52,13 @@ def fetch_artist_songs(artist_name: str, max_songs: int) -> pd.DataFrame:
                         "lyrics": song.lyrics,
                         "album_id": song.album.id if song.album else None,
                         "album_name": song.album.name if song.album else None,
-                        "album_release_date": song.album.release_date_components
-                        if song.album
-                        else None,
                         "album_url": song.album.url if song.album else None,
+                        "release_date": release_date,
                     }
                 )
+
+            if not request.get("next_page"):
+                break
 
             page = request["next_page"]
 
@@ -61,22 +73,16 @@ def main():
 
     parser = argparse.ArgumentParser(description="Create a dataset from Genius lyrics.")
     parser.add_argument(
-        "--artist", type=str, default="kizaru", help="Artist name to fetch"
-    )
-    parser.add_argument(
         "--max-songs", type=int, default=200, help="Max number of songs to fetch"
     )
     args = parser.parse_args()
 
-    df = fetch_artist_songs(args.artist, args.max_songs)
+    df = fetch_artist_songs(args.max_songs)
     print("sample:\n", df.head())
 
-    out_parquet = os.path.join(
-        os.path.dirname(__file__), "..", "data", f"00_{args.artist}_lyrics.parquet"
-    )
-    df.to_parquet(out_parquet, index=False)
+    df.to_parquet("data/00_kizaru_lyrics.parquet", index=False)
 
-    print(f"saved {df.shape[0]} {args.artist} songs")
+    print(f"saved {df.shape[0]} songs")
 
 
 if __name__ == "__main__":
