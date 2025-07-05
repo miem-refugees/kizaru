@@ -159,8 +159,6 @@ class Handlers:
         self.random_threshold += 1
         if self.random_threshold > 10:
             self.random_threshold = 0
-            await query.answer()
-            return
 
         await query.answer()
         await query.edit_message_reply_markup(self.settings_keyboard())
