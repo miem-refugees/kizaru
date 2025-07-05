@@ -23,7 +23,6 @@ def fetch_artist_songs(max_songs: int) -> pd.DataFrame:
 
             request: dict = genius.artist_songs(
                 artist.id,
-                sort="popularity",
                 per_page=50,
                 page=page,
             )
@@ -38,9 +37,9 @@ def fetch_artist_songs(max_songs: int) -> pd.DataFrame:
                 release_date = None
                 if meta.get("release_date_components"):
                     release_date = datetime(
-                        meta["release_date_components"].get("year", 0),
-                        meta["release_date_components"].get("month", 0),
-                        meta["release_date_components"].get("day", 0),
+                        meta["release_date_components"].get("year", 0) or 1,
+                        meta["release_date_components"].get("month", 0) or 1,
+                        meta["release_date_components"].get("day", 0) or 1,
                     )
 
                 songs.append(
@@ -73,7 +72,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Create a dataset from Genius lyrics.")
     parser.add_argument(
-        "--max-songs", type=int, default=200, help="Max number of songs to fetch"
+        "--max-songs", type=int, default=500, help="Max number of songs to fetch"
     )
     args = parser.parse_args()
 
