@@ -19,7 +19,7 @@ class VectorSearch:
         self.client.info()
 
         self.embed_model = SparseTextEmbedding(
-            model_name="Qdrant/bm42-all-minilm-l6-v2-attentions"
+            model_name="Qdrant/bm25",
         )
 
     def search(self, text: str):
@@ -34,7 +34,7 @@ class VectorSearch:
         hits = self.client.query_points(
             collection_name=COLLECTION_NAME,
             query=sparse_vector,
-            using="bm42",
+            using="bm25",
             with_payload=True,
             limit=1,
         ).points
