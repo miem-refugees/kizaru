@@ -22,7 +22,7 @@ class Handlers:
 
         self.toggle_on = True
         self.min_words = int(os.getenv("MIN_WORDS", 5))
-        self.random_treshold = int(os.getenv("RANDOM_TRESHOLD", 5))
+        self.random_threshold = int(os.getenv("RANDOM_THRESHOLD", 5))
         self.ratelimit = True
         self.ratelimit_sec = int(os.getenv("RATELIMIT_SEC", 30))
 
@@ -61,7 +61,9 @@ class Handlers:
 
         self.random_treshold = num
 
-        await update.message.reply_text(f"Рандом теперь {self.random_treshold} в пределах 1-10")
+        await update.message.reply_text(
+            f"Рандом теперь {self.random_treshold} в пределах 1-10"
+        )
 
     @admin_only
     async def toggle_ratelimit_callback(
@@ -110,7 +112,7 @@ class Handlers:
                         "Ratelimit ❌", callback_data="settings_ratelimit_on"
                     ),
                     InlineKeyboardButton(
-                        f"🎲 Рандом: {self.random_treshold} / 10",
+                        f"🎲 Рандом: {self.random_threshold} / 10",
                         callback_data="increment_random",
                     ),
                 ],
@@ -154,9 +156,9 @@ class Handlers:
     ) -> None:
         query = update.callback_query
 
-        self.random_treshold += 1
-        if self.random_treshold > 10:
-            self.random_treshold = 0
+        self.random_threshold += 1
+        if self.random_threshold > 10:
+            self.random_threshold = 0
             await query.answer()
             return
 
@@ -169,10 +171,9 @@ class Handlers:
     ) -> None:
         query = update.callback_query
 
-        if self.min_words > 0:
-            self.min_words -= 5
-            await query.answer()
-            return
+        self.min_words -= 5
+        if self.min_words < 0:
+            self.min_words = 0
 
         await query.answer()
         await query.edit_message_reply_markup(self.settings_keyboard())
@@ -184,10 +185,6 @@ class Handlers:
         query = update.callback_query
 
         self.min_words += 5
-        if self.min_words > 50:
-            self.random_treshold = 0
-            await query.answer()
-            return
 
         await query.answer()
         await query.edit_message_reply_markup(self.settings_keyboard())
@@ -211,7 +208,7 @@ class Handlers:
 
         if (
             len(text) < self.min_words
-            or random.randint(1, 10) < self.random_treshold
+            or random.randint(1, 10) < self.random_threshold
             or (
                 self.ratelimit
                 and not self.message_ratelimit.is_allowed(update.effective_chat.id)
