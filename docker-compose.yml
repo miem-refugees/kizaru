@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  bot:
+    image: ghcr.io/miem-refugees/kizaru:main
+    # build: .
+    container_name: kizaru-bot
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./.hf_cache:/hf_cache
