@@ -56,7 +56,7 @@ RATELIMIT_SEC=30
 2. **Install dependencies:**
    ```sh
    pip install uv
-   uv pip install -r requirements.txt
+   uv sync
    # or, using pyproject.toml:
    uv sync
    ```
