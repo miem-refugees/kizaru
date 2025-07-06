@@ -139,6 +139,8 @@ class Handlers:
             reply_to_message_id=update.message.id,
         )
 
+        await update.message.delete()
+
     @admin_only
     async def toggle_on_callback(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -199,7 +201,7 @@ class Handlers:
     async def message_handler(
         self, update: Update, _: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        if not self.toggle_on:
+        if not self.toggle_on or not update.message:
             return
 
         text = update.message.text
@@ -220,7 +222,16 @@ class Handlers:
             await update.message.reply_text(f"Упс, белый: {e}")
             return
         if result:
-            await update.message.reply_text(result)
+            await update.message.reply_text(
+                result,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton("🏃‍♂️‍➡️ Дроп", callback_data="delete"),
+                        ]
+                    ],
+                ),
+            )
 
     @admin_only
     async def restart_handler(
